@@ -1,4 +1,4 @@
-*----------------------------------------------*
+----------------------------------------------*
 |                                              |
 |             Virtual Grade 2.0                |
 |       A Linux-based, Python library          |
@@ -109,4 +109,5 @@ to easily and effectively add to this system
 - Brought over current scripts from 2.0beta
 - Added get_user method to retrieve groups
   for a given user
+
 
