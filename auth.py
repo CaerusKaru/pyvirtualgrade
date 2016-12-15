@@ -205,12 +205,12 @@ def _get_admin_grading():
         os.chdir(cons.LIB_PATH)
         groups = Popen(['./gfind.sh', remote_user], stdout=PIPE).stdout.read().strip().decode()
         
-        groups += "," # added to allow indexing to end
+        groups = "," + groups + ","  # added to allow indexing to end
 
-        admin = findall("ta(.+?),", groups) 
+        admin = findall(",ta([^,]*)", groups) 
         admin = [s for s in admin if _valid_course(s)]
 
-        grading = findall("grade(.+?),", groups)
+        grading = findall(",grade([^,]*)", groups)
         grading += admin
         grading = list(set(grading))
 
