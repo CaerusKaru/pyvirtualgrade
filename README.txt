@@ -57,6 +57,11 @@ to easily and effectively add to this system
 
 *----------------Changelog-------------------*
 
+12-15-16:
+
+- Added authentication model using LDAP and
+  Javascript Web Tokens (JWT)
+
 11-25-16:
 
 - Initialized Git repo
