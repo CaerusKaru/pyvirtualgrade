@@ -28,15 +28,18 @@ as a JSON object for later extraction/saving
 
 '''
 
-import file_manager,constants,library
+from . import file_manager
+from . import constants
+from . import auth
 
 
 def get_students_for_grading(course, assignment):
-        library.check_is_grader(course)
+        auth.check_is_grader(course)
 
         response = {}
 
-        names = set(library.get_students_for_assignment(course, assignment))
+        names = set(file_manager.get_students_for_assignment(course, assignment))
+
         com = file_manager.read_completed(course, assignment)
         inp = file_manager.read_inprogress(course, assignment)
 

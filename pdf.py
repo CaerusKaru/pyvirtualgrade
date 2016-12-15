@@ -24,12 +24,27 @@ back-end mess to fix this is, at this moment, a nightmare. Added functionality
 to resolve this is in the works...
 '''
 
-import constants, file_manager, library
+from . import constants
+from . import file_manager
+from . import library
+from . import auth
+
+def phone_tree(form):
+        req = form.getvalue('pdf_request')
+        response = {}
+        if req == 'get_next_student':
+                response = get_next_student(form)
+        elif req == 'get_problem_for_student':
+                response = get_problem_for_student(form)
+        else:
+                response['error'] = 'unsupported PDF method'
+
+        return response
 
 
-def _get_names_by_page(course, assignment, page):
+def _get_names_by_page(course, assignment, page, com):
 
-        names = library.get_students_for_assignment(course, assignment)
+        names = file_manager.get_students_for_assignment(course, assignment)
 
         num_names = len(names)
         num_names = num_names if num_names != 0 else 1
@@ -40,10 +55,9 @@ def _get_names_by_page(course, assignment, page):
                 { '1' : ['aplume01','molay'], '2' : ['cgregg','hescott'], ... }
         '''
 
-        com = file_manager.read_completed(course, assignment)
-        num_com = len(com[page]) if com != [] else 0
+        num_com = len(com) if com != [] else 0
         
-        return num_names, num_com
+        return names, num_names, num_com
 
 
 def get_students_for_grading(course, assignment):
@@ -51,15 +65,73 @@ def get_students_for_grading(course, assignment):
         num_pages = int(library.get_adetails(course, assignment)['pages'])
 
         response = {}
+        com = file_manager.read_completed(course, assignment)
 
         for i in range(0, num_pages):
                 page = {}
                 page['num'] = (i+1) # done this way to prevent zero-indexing
-                num_names, num_com = _get_names_by_page(course, assignment, str(i+1))
+                names, num_names, num_com = _get_names_by_page(course, assignment, str(i+1), com[str(i+1)])
                 num_done = (float(num_com)/num_names)*100
                 page['progress'] = num_done
+                page['names'] = names
+                page['com'] = com[str(i+1)]
                 pages.append(page)
 
         response['pages'] = pages
+        return response
+
+
+def _find_next_student(course, assignment, problem):
+        names = file_manager.get_students_for_assignment(course, assignment)
+        com = file_manager.read_completed(course, assignment)
+
+        unfinished_names = sorted([x for x in names if x not in com[problem]])
+
+        if len(unfinished_names) > 0:
+                return unfinished_names[0]
+        else:
+                return ''
+
+        
+def get_problem_for_student(form):
+        response = {}
+
+        course = form.getvalue('course')
+        assignment = form.getvalue('assign')
+        student = form.getvalue('student')
+        problem = form.getvalue('problem')
+
+        library.check_args({'course': course, 'assignment': assignment, 'problem': problem})
+        auth.check_is_grader(course)
+
+        src_convention = 'p' + problem + '.svg'
+
+        svg = file_manager.get_problem(course, assignment, student, src_convention)
+
+        response['svg'] = [svg]
+
+        return response
+
+
+def get_next_student(form):
+        course = form.getvalue('course')
+        assignment = form.getvalue('assign')
+        problem = form.getvalue('problem')
+
+        response = {}
+
+        library.check_args({'course':course,'assignment':assignment,'problem':problem})
+
+        next_student = _find_next_student(course, assignment, problem)
+
+        if next_student == '':
+                response['error'] = 'unable to find next student'
+                return response
+
+        score = file_manager.get_score_for_problem(course, assignment, next_student, problem)
+
+        response['student'] = next_student
+        response['score'] = score
+        
         return response
 

@@ -7,6 +7,10 @@ Date created: Nov 8, 2016
 
 import os, pwd, getpass  # to get home directory
 
+# MOVE TO ENV ASAP
+SECRET_KEY = '64q,Jvgj~B73?1-6&$.^fiD3zT0];8jB2of%V9^dl.WG1|G1X5j6eEPRe5y7|K>'
+
+
 def _storage_owner(path):
     owner = pwd.getpwuid(os.stat(path).st_uid)[0]
     return owner == getpass.getuser()
@@ -36,6 +40,7 @@ ALIST_PATH = '/alist'
 LIB_PATH = ROOT_PATH + 'vgrade/'
 COMPLETED_FILE = 'completed'
 INPROGRESS_FILE = 'inprogress'
+PROVIDE_SRC = 'provide'
 
 '''
 VALID MODULES:
