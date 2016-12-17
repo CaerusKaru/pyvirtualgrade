@@ -38,7 +38,7 @@ get_user -- gets the user's Linux login, grading groups, and admin groups
 '''
 def get_user():
         remote_user = auth.get_user()
-        admin, grading = auth._get_admin_grading()
+        admin, grading = auth.get_admin_grading()
 
         courses = auth._get_courses()
 

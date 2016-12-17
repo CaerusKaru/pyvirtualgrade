@@ -56,8 +56,11 @@ def _check_refresh_token(refresh_token):
         except:
                 raise NoUserException('cannot decode token')
         else:
+                admin, grading = _get_admin_grading(payload['username'])
                 auth_payload = {
                         'username': payload['username'],
+                        'admin': admin,
+                        'grading': grading,
                         'exp': datetime.utcnow() + _AUTH_TIME
                 }
                 # switch to -> os.environ['SECRET_KEY']
@@ -92,8 +95,12 @@ def login(username, password):
                                 return auth_cookie, ref_cookie, False
                         secret_key = cons.SECRET_KEY  # switch to -> os.environ['SECRET_KEY']
 
+                        admin, grading = _get_admin_grading(username)
+
                         auth_payload = {
                                 'username': username,
+                                'admin': admin,
+                                'grading': grading,
                                 'exp': datetime.utcnow() + _AUTH_TIME
                         }
 
@@ -143,7 +150,7 @@ def _get_remote_user():
                         c['vg-auth'] = auth_token
                         payload = jwt.decode(auth_token, cons.SECRET_KEY)  # switch to -> os.environ['SECRET_KEY'])
                         _AUTH_TOKEN = auth_token
-                        return payload['username']
+                        return payload['username'], payload['admin'], payload['grading']
 
                 except KeyError:
                         raise NoUserException('unable to get token values')
@@ -152,7 +159,13 @@ def _get_remote_user():
 
 
 def get_user():
-        return _get_remote_user()
+        user,admin,grading = _get_remote_user()
+        return user
+
+
+def get_admin_grading():
+        user,admin,grading = _get_remote_user()
+        return admin, grading
 
 
 '''
@@ -200,8 +213,8 @@ _get_admin_grading -- returns all TA and grading groups for current request user
                       Order: admin, grading
                       E.g. aplume01 -> (['170', '00'], ['170', '00', '15'])
 '''
-def _get_admin_grading():
-        remote_user = get_user()
+def _get_admin_grading(remote_user):
+
         os.chdir(cons.LIB_PATH)
         groups = Popen(['./gfind.sh', remote_user], stdout=PIPE).stdout.read().strip().decode()
         
@@ -223,7 +236,7 @@ check_is_grader -- determines whether current request user is a grader for a giv
                    * raises NoAuthException if not grader
 '''
 def check_is_grader(course):
-        admin, grading = _get_admin_grading()
+        admin, grading = get_admin_grading()
         test = course in grading
         if not test:
                 raise NoAuthException("not a grader for " + course)
@@ -236,7 +249,7 @@ check_is_admin -- determines whether current request user is an admin for a give
                   * raises NoAuthException if not admin
 '''
 def check_is_admin(course):
-        admin, grading = _get_admin_grading()
+        admin, grading = get_admin_grading()
         test = course in admin
         if not test:
                 raise NoAuthException("not an admin for " + course)
@@ -249,7 +262,7 @@ get_permissions -- gets whether current request user is an admin or a grader
                    for a given course
 '''
 def get_permissions(course):
-        admin, grading = _get_admin_grading()
+        admin, grading = get_admin_grading()
         isAdmin = course in admin
         isGrader = isAdmin or course in grading
         return isAdmin, isGrader
