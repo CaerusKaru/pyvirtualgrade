@@ -21,13 +21,13 @@ class BadArgsException(Exception):
                 return repr(self.value)
 
 
-def _get_all_pages(course_list):
+def _get_all_pages(course_list, check_published):
         pages = []
         for course in course_list:
                 alist = file_manager.read_alist(course)
                 course_obj = {}
                 course_obj['name'] = course
-                course_obj['assigns'] = [x for x in alist]
+                course_obj['assigns'] = [x for x in alist if (check_published and alist[x]['publish'] == 'y') or not check_published]
                 pages.append(course_obj)
 
         return pages
@@ -53,9 +53,9 @@ def get_user():
         admin, grading = auth.get_admin_grading()
         courses = auth._get_courses()
 
-        courses_full = _get_all_pages(courses)
-        admin_full = _get_all_pages(admin)
-        grading_full = _get_all_pages(grading)
+        courses_full = _get_all_pages(courses, True)
+        admin_full = _get_all_pages(admin, False)
+        grading_full = _get_all_pages(grading, False)
 
         return (remote_user, admin_full, grading_full, courses_full)
 
