@@ -87,7 +87,7 @@ def login(username, password):
         auth_cookie, ref_cookie = get_empty_tokens()
         
         try:
-                con = ldap.initialize('ldap://ldap.eecs.tufts.edu:389')
+                con = ldap.initialize('ldaps://ldap.eecs.tufts.edu:636')
 
                 try:
                         con.simple_bind_s(user_ldap, password)
