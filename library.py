@@ -21,6 +21,18 @@ class BadArgsException(Exception):
                 return repr(self.value)
 
 
+def _get_all_pages(course_list):
+        pages = []
+        for course in course_list:
+                alist = file_manager.read_alist(course)
+                course_obj = {}
+                course_obj['name'] = course
+                course_obj['assigns'] = [x for x in alist]
+                pages.append(course_obj)
+
+        return pages
+
+
 '''
 get_user -- gets the user's Linux login, grading groups, and admin groups
            args: none
@@ -39,10 +51,13 @@ get_user -- gets the user's Linux login, grading groups, and admin groups
 def get_user():
         remote_user = auth.get_user()
         admin, grading = auth.get_admin_grading()
-
         courses = auth._get_courses()
 
-        return (remote_user, admin, grading, courses)
+        courses_full = _get_all_pages(courses)
+        admin_full = _get_all_pages(admin)
+        grading_full = _get_all_pages(grading)
+
+        return (remote_user, admin_full, grading_full, courses_full)
 
 
 '''
