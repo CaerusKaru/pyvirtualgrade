@@ -60,6 +60,15 @@ def _get_names_by_page(course, assignment, page, com):
         return names, num_names, num_com
 
 
+def get_grades(user, course, assignment):
+        response = {}
+        score_file = file_manager.read_score(user, course, assignment)
+        response['grades'] = score_file
+        response['published'] = library.get_adetails(course, assignment)['publish_com']
+        
+        return response
+
+
 def get_students_for_grading(course, assignment):
         pages = []
         num_pages = int(library.get_adetails(course, assignment)['pages'])

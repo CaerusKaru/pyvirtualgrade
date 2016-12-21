@@ -50,7 +50,7 @@ def _read_file(filename):
                                 pass
                         return obj
         except:
-                return []
+                return {}
 
 
 '''
@@ -59,8 +59,6 @@ read_alist -- gets the parameters file for a particular course
                 any extraneous information a module decides to store
 '''
 def read_alist(course):
-        auth.check_is_grader(course)
-        
         if not _check_course(course):
                 return []
         else:
@@ -184,3 +182,43 @@ def read_inprogress(course, assignment):
                         else:
                                 return {}
 
+
+def read_score(user, course, assignment):
+        completed_path = constants.GRADES_PATH
+        users = []
+        try:
+                users = os.listdir(completed_path)
+        except OSError as e:
+                pass
+        except:
+                pass
+        
+        if user not in users:
+                return {}
+
+        completed_path += user + '/'
+        courses = []
+        try:
+                courses = os.listdir(completed_path)
+        except OSError as e:
+                pass
+        except:
+                pass
+
+        if course not in courses:
+                return {}
+
+        completed_path += course + '/'
+        assigns = []
+        try:
+                assigns = os.listdir(completed_path)
+        except OSError as e:
+                pass
+        except:
+                pass
+
+        if assignment not in assigns:
+                return {}
+
+        completed_path += assignment + '/score'
+        return _read_file(completed_path)

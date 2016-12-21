@@ -27,7 +27,7 @@ def _get_all_pages(course_list, check_published):
                 alist = file_manager.read_alist(course)
                 course_obj = {}
                 course_obj['name'] = course
-                course_obj['assigns'] = [x for x in alist if (check_published and alist[x]['publish'] == 'y') or not check_published]
+                course_obj['assigns'] = [x for x in alist if (check_published and alist[x]['publish']) or not check_published]
                 pages.append(course_obj)
 
         return pages
@@ -80,11 +80,36 @@ def get_adetails(course, assignment):
         return page_list[assignment] if assignment in page_list else {}
 
 
+def get_type(form):
+        response = {}
+        course = form.getvalue('course')
+        assign = form.getvalue('assign')
+        check_args({'course':course,'assign':assign})
+
+        response['type'] = _get_type(course, assign)
+        return response
+
+
+def get_graders(form):
+        response = {}
+        course = form.getvalue('course')
+        check_args({'course': course})
+
+        ta_graders = auth._get_graders('ta'+course)
+        grade_graders = auth._get_graders('grade'+course)
+
+        combined = ta_graders + grade_graders
+
+        response['graders'] = list(set(combined))
+
+        return response
+
+
 '''
-get_type -- gets the assignment type for a given assignment in a given course
+_get_type -- gets the assignment type for a given assignment in a given course
              e.g. ('00', 'hw4') -> 'pdf'
 '''
-def get_type(course, assignment):
+def _get_type(course, assignment):
         adetails = get_adetails(course, assignment)
         return adetails['type'] if adetails != {} else ''
 
@@ -104,7 +129,7 @@ def get_students_for_grading(form):
 
         auth.check_is_grader(course)
 
-        assign_type = get_type(course, assignment)
+        assign_type = _get_type(course, assignment)
 
         try:
                 os.chdir(cons.LIB_PATH)
@@ -114,6 +139,38 @@ def get_students_for_grading(form):
                         logging.error('Tried to invoke invalid module:' + assign_type)
                         raise Exception('Tried to invoke invalid module:' + assign_type)
                 response = module.get_students_for_grading(course, assignment)
+                response['type'] = assign_type
+
+        except Exception as e:
+                response['error'] = str(e)
+
+        return response
+
+
+'''
+get_students_for_grading -- takes in the request form and parses out the course
+                            and assignment, gets the type for the assignment,
+                            then retrives the students from that type's module
+'''
+def get_grades(form):
+        response = {}
+
+        course = form.getvalue('course')
+        assignment = form.getvalue('assign')
+        user = auth.get_user()
+
+        check_args({'course': course, 'assignment': assignment})
+
+        assign_type = _get_type(course, assignment)
+
+        try:
+                os.chdir(cons.LIB_PATH)
+                if assign_type in cons.VALID_MODULES:
+                        module = import_module('.' + assign_type, 'virtualgrade')
+                else:
+                        logging.error('Tried to invoke invalid module:' + assign_type)
+                        raise Exception('Tried to invoke invalid module:' + assign_type)
+                response = module.get_grades(user, course, assignment)
                 response['type'] = assign_type
 
         except Exception as e:

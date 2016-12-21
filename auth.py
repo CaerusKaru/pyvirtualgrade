@@ -12,7 +12,7 @@ import ldap
 from urllib import parse
 
 from . import constants as cons
-from re import findall
+from re import findall, split
 from subprocess import Popen, PIPE
 
 
@@ -230,6 +230,22 @@ def _get_admin_grading(remote_user):
         return admin, grading
 
 
+def _get_graders(course):
+        graders = []
+        
+        try:
+                raw_data = Popen(['getent', 'group', course], stdout=PIPE).stdout.read().strip().decode()
+                csv_graders = split(':', raw_data)[3]
+                graders = split(',', csv_graders)
+                try:
+                        graders.remove('vgrade')
+                        graders.remove('provide')
+                except:
+                        pass
+        except:
+                pass
+
+        return graders
 
 '''
 check_is_grader -- determines whether current request user is a grader for a given course
