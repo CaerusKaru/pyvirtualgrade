@@ -52,7 +52,7 @@ def _check_refresh_token(refresh_token):
         try:
                 payload = jwt.decode(refresh_token, cons.SECRET_KEY)  # switch to -> os.environ['SECRET_KEY'])
         except jwt.ExpiredSignatureError:
-                raise NoAuthException('refresh token expired')
+                raise NoUserException('refresh token expired')
         except:
                 raise NoUserException('cannot decode token')
         else:
