@@ -29,6 +29,7 @@ from . import file_manager
 from . import library
 from . import auth
 
+
 def phone_tree(form):
         req = form.getvalue('pdf_request')
         response = {}
@@ -56,7 +57,7 @@ def _get_names_by_page(course, assignment, page, com):
         '''
 
         num_com = len(com) if com != [] else 0
-        
+
         return names, num_names, num_com
 
 
@@ -64,8 +65,9 @@ def get_grades(user, course, assignment):
         response = {}
         score_file = file_manager.read_score(user, course, assignment)
         response['grades'] = score_file
-        response['published'] = library.get_adetails(course, assignment)['publish_com']
-        
+        details = library.get_adetails(course, assignment)
+        response['published'] = details['publish_com']
+
         return response
 
 
@@ -78,8 +80,11 @@ def get_students_for_grading(course, assignment):
 
         for i in range(0, num_pages):
                 page = {}
-                page['num'] = (i+1) # done this way to prevent zero-indexing
-                names, num_names, num_com = _get_names_by_page(course, assignment, str(i+1), com[str(i+1)])
+                page['num'] = (i+1)  # done this way to prevent zero-indexing
+                names, num_names, num_com = _get_names_by_page(course,
+                                                               assignment,
+                                                               str(i+1),
+                                                               com[str(i+1)])
                 num_done = (float(num_com)/num_names)*100
                 page['progress'] = num_done
                 page['names'] = names
@@ -101,7 +106,7 @@ def _find_next_student(course, assignment, problem):
         else:
                 return ''
 
-        
+
 def get_problem_for_student(form):
         response = {}
 
@@ -110,12 +115,14 @@ def get_problem_for_student(form):
         student = form.getvalue('student')
         problem = form.getvalue('problem')
 
-        library.check_args({'course': course, 'assignment': assignment, 'problem': problem})
+        library.check_args({'course': course, 'assignment': assignment,
+                            'problem': problem})
         auth.check_is_grader(course)
 
         src_convention = 'p' + problem + '.svg'
 
-        svg = file_manager.get_problem(course, assignment, student, src_convention)
+        svg = file_manager.get_problem(course, assignment, student,
+                                       src_convention)
 
         response['svg'] = [svg]
 
@@ -129,7 +136,8 @@ def get_next_student(form):
 
         response = {}
 
-        library.check_args({'course':course,'assignment':assignment,'problem':problem})
+        library.check_args({'course': course, 'assignment': assignment,
+                            'problem': problem})
 
         next_student = _find_next_student(course, assignment, problem)
 
@@ -137,10 +145,10 @@ def get_next_student(form):
                 response['error'] = 'unable to find next student'
                 return response
 
-        score = file_manager.get_score_for_problem(course, assignment, next_student, problem)
+        score = file_manager.get_score_for_problem(course, assignment,
+                                                   next_student, problem)
 
         response['student'] = next_student
         response['score'] = score
-        
-        return response
 
+        return response

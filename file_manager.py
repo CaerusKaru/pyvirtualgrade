@@ -16,7 +16,8 @@ Notes:
 '''
 
 
-import os, json
+import os
+import json
 from . import auth
 from . import constants
 from . import provide
@@ -25,6 +26,8 @@ from . import provide
 '''
 _check_course -- makes sure that a course is available for reading/writing
 '''
+
+
 def _check_course(course):
         courses = []
         try:
@@ -38,8 +41,10 @@ def _check_course(course):
 
 '''
 _read_file -- PRIVATE function to read the contents of a file, returns
-              empty list if any problems are encountered 
+              empty list if any problems are encountered
 '''
+
+
 def _read_file(filename):
         try:
                 with open(filename, 'r') as f:
@@ -58,20 +63,26 @@ read_alist -- gets the parameters file for a particular course
               - parameters file contains list of all assignments, types, and
                 any extraneous information a module decides to store
 '''
+
+
 def read_alist(course):
         if not _check_course(course):
                 return []
         else:
-                full_path = constants.ASSIGN_PATH + course + constants.ALIST_PATH
+                assign = constants.ASSIGN_PATH
+                alist = constants.ALIST_PATH
+                full_path = assign + course + alist
                 return _read_file(full_path)
 
 
 '''
 _get_source -- gets the file repository for an assignment in a specific course
 '''
+
+
 def _get_source(course, assignment):
         auth.check_is_grader(course)
-        
+
         alist = read_alist(course)
         if (not alist == []) and (assignment in alist):
                 adetails = alist[assignment]
@@ -83,16 +94,20 @@ def _get_source(course, assignment):
 get_students_for_grading -- gets the list of students from the correct storage
                             repository
 '''
+
+
 def get_students_for_assignment(course, assignment):
         if _get_source(course, assignment) == constants.PROVIDE_SRC:
                 return provide.get_students_for_assignment(course, assignment)
-        return [] 
+        return []
 
 
 '''
-get_problem -- reads in course, assignment, and student, along with the source file
-               then retrieves the file source and returns it as raw data
+get_problem -- reads in course, assignment, and student, along with the source
+               file then retrieves the file source and returns it as raw data
 '''
+
+
 def get_problem(course, assignment, student, src):
         auth.check_is_grader(course)
 
@@ -102,16 +117,20 @@ def get_problem(course, assignment, student, src):
 
 
 '''
-read_completed -- reads in the file containing all info about 'completed' students
+read_completed -- reads in the file containing all info about 'completed'
+                  students
                   What does this mean?
-                  - It's up to every module to come up with how to define 'completed',
-                    and what information to store along with it
-                  - This module's obligations are safe storage and retrieval of this
-                    information, everything else is up to the responsible module
+                  - It's up to every module to come up with how to define
+                    'completed', and what information to store along with it
+                  - This module's obligations are safe storage and retrieval of
+                    this information, everything else is up to the responsible
+                    module
 '''
+
+
 def read_completed(course, assignment):
         auth.check_is_grader(course)
-        
+
         if not _check_course(course):
                 return []
         else:
@@ -136,23 +155,28 @@ def read_completed(course, assignment):
                                 pass
 
                         if constants.COMPLETED_FILE in files:
-                                completed_path += "/" + constants.COMPLETED_FILE
+                                comp_file = constants.COMPLETED_FILE
+                                completed_path += "/" + comp_file
                                 return _read_file(completed_path)
                         else:
                                 return {}
 
 
 '''
-read_inprogress -- reads in the file containing all info about inprogress' students
+read_inprogress -- reads in the file containing all info about inprogress'
+                   students
                    What does this mean?
-                   - It's up to every module to come up with how to define 'inprogress',
-                     and what information to store along with it
-                   - This module's obligations are safe storage and retrieval of this
-                     information, everything else is up to the responsible module
+                   - It's up to every module to come up with how to define
+                     'inprogress', and what information to store along with it
+                   - This module's obligations are safe storage and retrieval
+                     of this information, everything else is up to the
+                     responsible module
 '''
+
+
 def read_inprogress(course, assignment):
         auth.check_is_grader(course)
-        
+
         if not _check_course(course):
                 return []
         else:
@@ -177,7 +201,8 @@ def read_inprogress(course, assignment):
                                 pass
 
                         if constants.INPROGRESS_FILE in files:
-                                completed_path += "/" + constants.INPROGRESS_FILE
+                                inp_file = constants.INPROGRESS_FILE
+                                completed_path += "/" + inp_file
                                 return _read_file(completed_path)
                         else:
                                 return {}
@@ -192,7 +217,7 @@ def read_score(user, course, assignment):
                 pass
         except:
                 pass
-        
+
         if user not in users:
                 return {}
 

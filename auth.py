@@ -12,7 +12,7 @@ import ldap
 from urllib import parse
 
 from . import constants as cons
-from re import findall, split
+from re import split
 from subprocess import Popen, PIPE
 
 
@@ -24,12 +24,15 @@ _AUTH_TOKEN = ''
 class NoUserException(Exception):
         def __init__(self, value):
                 self.value = value
+
         def __str__(self):
                 return repr(self.value)
+
 
 class NoAuthException(Exception):
         def __init__(self, value):
                 self.value = value
+
         def __str__(self):
                 return repr(self.value)
 
@@ -37,7 +40,8 @@ class NoAuthException(Exception):
 def _check_auth_token(auth_token, refresh_token):
 
         try:
-                jwt.decode(auth_token, cons.SECRET_KEY)  # switch to -> os.environ['SECRET_KEY'])
+                # switch to -> os.environ['SECRET_KEY'])
+                jwt.decode(auth_token, cons.SECRET_KEY)
         except jwt.ExpiredSignatureError:
                 return _check_refresh_token(refresh_token)
         except:
@@ -50,7 +54,8 @@ def _check_refresh_token(refresh_token):
 
         payload = {}
         try:
-                payload = jwt.decode(refresh_token, cons.SECRET_KEY)  # switch to -> os.environ['SECRET_KEY'])
+                # switch to -> os.environ['SECRET_KEY'])
+                payload = jwt.decode(refresh_token, cons.SECRET_KEY)
         except jwt.ExpiredSignatureError:
                 raise NoUserException('refresh token expired')
         except:
@@ -64,7 +69,8 @@ def _check_refresh_token(refresh_token):
                         'exp': datetime.utcnow() + _AUTH_TIME
                 }
                 # switch to -> os.environ['SECRET_KEY']
-                return jwt.encode(auth_payload, cons.SECRET_KEY, algorithm='HS256')
+                return jwt.encode(auth_payload, cons.SECRET_KEY,
+                                  algorithm='HS256')
 
 
 def get_empty_tokens():
@@ -76,7 +82,7 @@ def get_empty_tokens():
         ref_cookie['httponly'] = True
         ref_cookie['secure'] = True
         ref_cookie.set('vg-ref', '', parse.quote(''))
-        
+
         return auth_cookie, ref_cookie
 
 
@@ -85,15 +91,17 @@ def login(username, password):
         password = password if password is not None else ''
         user_ldap = 'uid='+username+',ou=People,dc=eecs,dc=tufts,dc=edu'
         auth_cookie, ref_cookie = get_empty_tokens()
-        
+
         try:
                 con = ldap.initialize('ldaps://ldap.eecs.tufts.edu:636')
 
                 try:
                         con.simple_bind_s(user_ldap, password)
-                        if cons.SECRET_KEY == '':  # switch to -> 'SECRET_KEY' not in os.environ:
+                        # switch to -> 'SECRET_KEY' not in os.environ:
+                        if cons.SECRET_KEY == '':
                                 return auth_cookie, ref_cookie, False
-                        secret_key = cons.SECRET_KEY  # switch to -> os.environ['SECRET_KEY']
+                        # switch to -> os.environ['SECRET_KEY']
+                        secret_key = cons.SECRET_KEY
 
                         admin, grading = _get_admin_grading(username)
 
@@ -109,12 +117,15 @@ def login(username, password):
                                 'exp': datetime.utcnow() + _REFRESH_TIME
                         }
 
+                        auth_token = jwt.encode(auth_payload, secret_key,
+                                                algorithm='HS256')
+                        refresh_token = jwt.encode(refresh_payload, secret_key,
+                                                   algorithm='HS256')
 
-                        auth_token = jwt.encode(auth_payload, secret_key, algorithm='HS256')
-                        refresh_token = jwt.encode(refresh_payload, secret_key, algorithm='HS256')
-                        
-                        auth_cookie.set('vg-auth', auth_token, parse.quote(auth_token))
-                        ref_cookie.set('vg-ref', refresh_token, parse.quote(refresh_token))
+                        auth_cookie.set('vg-auth', auth_token,
+                                        parse.quote(auth_token))
+                        ref_cookie.set('vg-ref', refresh_token,
+                                       parse.quote(refresh_token))
 
                 except ldap.INVALID_CREDENTIALS:
                         # raise NoAuthException('invalid username/password')
@@ -124,7 +135,7 @@ def login(username, password):
                         return auth_cookie, ref_cookie, False
         except:
                 return auth_cookie, ref_cookie, False
-        
+
         finally:
                 con.unbind()
 
@@ -135,6 +146,8 @@ def login(username, password):
 _get_remote_user -- returns the Linux username of the current requester
                     * Currently retrieved as REMOTE_USER, authenticated by LDAP
 '''
+
+
 def _get_remote_user():
 
         if 'HTTP_COOKIE' in os.environ:
@@ -148,9 +161,13 @@ def _get_remote_user():
 
                         auth_token = _check_auth_token(auth_token, ref_token)
                         c['vg-auth'] = auth_token
-                        payload = jwt.decode(auth_token, cons.SECRET_KEY)  # switch to -> os.environ['SECRET_KEY'])
+                        # switch to -> os.environ['SECRET_KEY'])
+                        payload = jwt.decode(auth_token, cons.SECRET_KEY)
+                        user = payload['username']
+                        admin = payload['admin']
+                        grading = payload['grading']
                         _AUTH_TOKEN = auth_token
-                        return payload['username'], payload['admin'], payload['grading']
+                        return user, admin, grading
 
                 except KeyError:
                         raise NoUserException('unable to get token values')
@@ -159,12 +176,12 @@ def _get_remote_user():
 
 
 def get_user():
-        user,admin,grading = _get_remote_user()
+        user, admin, grading = _get_remote_user()
         return user
 
 
 def get_admin_grading():
-        user,admin,grading = _get_remote_user()
+        user, admin, grading = _get_remote_user()
         return admin, grading
 
 
@@ -172,26 +189,19 @@ def get_admin_grading():
 _map_courses -- mapping function to return the course name without extension
                 e.g. 00.hw4.* -> 00
 '''
+
+
 def _map_courses(s):
         return s.split(".")[0]
 
 
 '''
-_valid_course -- mapping function to return groups that are only valid
-                 e.g. tape is not a TA group, but ta150 is
-                 Hueristics: ta{} must be followed by at least one integer, as must grade{}
-'''
-def _valid_course(s):
-        try: 
-                int(s[0]) # we only care about the first digit after 'ta', e.g. 'ta1nlp' is acceptable
-                return True
-        except ValueError:
-                return False
-
-'''
-_get_courses -- gets all courses in which grades are available for current request user
+_get_courses -- gets all courses in which grades are available for current
+                request user
                 e.g. 'aplume01' -> ['00', '15', '20']
 '''
+
+
 def _get_courses():
         user = get_user()
         course_path = cons.GRADES_PATH + user + "/"
@@ -209,21 +219,24 @@ def _get_courses():
 
 
 '''
-_get_admin_grading -- returns all TA and grading groups for current request user
+_get_admin_grading -- returns all TA and grading groups for current request
+                      user
                       Order: admin, grading
                       E.g. aplume01 -> (['170', '00'], ['170', '00', '15'])
 '''
+
+
 def _get_admin_grading(remote_user):
 
-        os.chdir(cons.LIB_PATH)
-        groups = Popen(['./gfind.sh', remote_user], stdout=PIPE).stdout.read().strip().decode()
-        
-        groups = "," + groups + ","  # added to allow indexing to end
+        pipe_cmd = ['groups', remote_user]
+        raw_data = Popen(pipe_cmd, stdout=PIPE).stdout.read().strip().decode()
+        groups = raw_data.split(' ')[2:]
 
-        admin = findall(",ta([^,]*)", groups) 
-        admin = [s for s in admin if _valid_course(s)]
+        admin = [x[2:] for x in groups
+                 if x.startswith('ta') and x[2].isdigit()]
+        grading = [x[5:] for x in groups
+                   if x.startswith('grade') and x[5].isdigit()]
 
-        grading = findall(",grade([^,]*)", groups)
         grading += admin
         grading = list(set(grading))
 
@@ -232,10 +245,11 @@ def _get_admin_grading(remote_user):
 
 def _get_graders(course):
         graders = []
-        
+
         try:
-                raw_data = Popen(['getent', 'group', course], stdout=PIPE).stdout.read().strip().decode()
-                csv_graders = split(':', raw_data)[3]
+                pipe_cmd = ['getent', 'group', course]
+                raw_data = Popen(pipe_cmd, stdout=PIPE).stdout.read().strip()
+                csv_graders = split(':', raw_data.decode())[3]
                 graders = split(',', csv_graders)
                 try:
                         graders.remove('vgrade')
@@ -248,9 +262,12 @@ def _get_graders(course):
         return graders
 
 '''
-check_is_grader -- determines whether current request user is a grader for a given course
+check_is_grader -- determines whether current request user is a grader for a
+                   given course
                    * raises NoAuthException if not grader
 '''
+
+
 def check_is_grader(course):
         admin, grading = get_admin_grading()
         test = course in grading
@@ -261,9 +278,12 @@ def check_is_grader(course):
 
 
 '''
-check_is_admin -- determines whether current request user is an admin for a given course
+check_is_admin -- determines whether current request user is an admin for a
+                  given course
                   * raises NoAuthException if not admin
 '''
+
+
 def check_is_admin(course):
         admin, grading = get_admin_grading()
         test = course in admin
@@ -274,12 +294,13 @@ def check_is_admin(course):
 
 
 '''
-get_permissions -- gets whether current request user is an admin or a grader 
+get_permissions -- gets whether current request user is an admin or a grader
                    for a given course
 '''
+
+
 def get_permissions(course):
         admin, grading = get_admin_grading()
-        isAdmin = course in admin
-        isGrader = isAdmin or course in grading
-        return isAdmin, isGrader
-
+        is_admin = course in admin
+        is_grader = is_admin or course in grading
+        return is_admin, is_grader

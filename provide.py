@@ -25,6 +25,7 @@ def _check_folder(path, folder):
 def _high_sub(s):
         return s.split('.')[1]
 
+
 def _get_latest(path, student):
         all_subs = os.listdir(path)
         student_subs = [x for x in all_subs if x.split('.')[0] == student]
@@ -35,6 +36,8 @@ def _get_latest(path, student):
 '''
 get_problem -- read the file source in the provide directory
 '''
+
+
 def get_problem(course, assignment, student, src):
         auth.check_is_grader(course)
 
@@ -73,8 +76,10 @@ get_students_for_assignment -- gets a list of all students in a provide
                                directory for a particular course and
                                assignment
 '''
+
+
 def get_students_for_assignment(course, assignment):
-        
+
         auth.check_is_grader(course)
         full_path = constants.COMP_PATH
 
@@ -90,11 +95,11 @@ def get_students_for_assignment(course, assignment):
 
         names = []
         try:
-                names = [name.split('.')[0] for name in os.listdir(full_path) if os.path.isdir(os.path.join(full_path, name))]
+                names = [name.split('.')[0] for name in os.listdir(full_path)
+                         if os.path.isdir(os.path.join(full_path, name))]
         except OSError as e:
                 pass
         except:
                 pass
 
         return list(set(names))
-

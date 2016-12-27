@@ -5,7 +5,9 @@ Created by: Adam Plumer
 Date created: Nov 8, 2016
 '''
 
-import os, pwd, getpass  # to get home directory
+import os
+import pwd
+import getpass  # to get home directory
 
 # MOVE TO ENV ASAP
 SECRET_KEY = '64q,Jvgj~B73?1-6&$.^fiD3zT0];8jB2of%V9^dl.WG1|G1X5j6eEPRe5y7|K>'
@@ -30,8 +32,11 @@ FILE PATHS:
 - lib: path to this module, in case subprocess
        needs to run local scripts (e.g. groups)
 '''
+
+
 ROOT_PATH = os.path.expanduser('~') + '/'
-STORAGE_PATH = '/r/virtualgrade/' if _storage_owner('/r/virtualgrade/grades/') else ROOT_PATH
+_owner = _storage_owner('/r/virtualgrade/grades/')
+STORAGE_PATH = '/r/virtualgrade/' if _owner else ROOT_PATH
 GRADES_PATH = STORAGE_PATH + 'grades/'
 COMP_PATH = '/comp/'
 GRADING_PATH = '/grading/'
@@ -41,6 +46,7 @@ LIB_PATH = ROOT_PATH + 'vgrade/'
 COMPLETED_FILE = 'completed'
 INPROGRESS_FILE = 'inprogress'
 PROVIDE_SRC = 'provide'
+CUR_SEMESTER = '2016f'
 
 '''
 VALID MODULES:
@@ -52,6 +58,8 @@ VALID_MODULES = ['pdf', 'scorecard']
 '''
 get_course_grading_path -- returns the absolute path for a course's grading dir
 '''
+
+
 def get_course_grading_path(course):
         return COMP_PATH + course + GRADING_PATH
 
@@ -63,4 +71,3 @@ MESSAGES:
 '''
 ERROR_MODULE_MSG = "cannot find method"
 NO_MODULE_FOUND_MSG = "unknown method/type"
-
