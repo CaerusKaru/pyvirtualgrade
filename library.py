@@ -4,9 +4,13 @@ Created by: Adam Plumer
 Date created: Nov 8, 2016
 '''
 
+from flask import Blueprint, session, request
 from . import file_manager
 from . import auth
+from .course import Course
+import json
 
+library_page = Blueprint('library_page', __name__)
 
 class BadArgsException(Exception):
         def __init__(self, value):
@@ -14,6 +18,66 @@ class BadArgsException(Exception):
 
         def __str__(self):
                 return repr(self.value)
+
+def _get_course():
+        c = request.args.get('course')
+        a = request.args.get('assign')
+        se = request.args.get('semester')
+        st = request.args.get('student') or session['username']
+        p = request.args.get('problem')
+
+        course = Course(c, se, a, st, p)
+
+        return course
+
+@library_page.route('/getUser', methods=['GET'])
+def get_user():
+        user, admin, grading, courses = _get_user()
+        response = {}
+        response['user'] = user
+        response['archon'] = admin
+        response['grading'] = grading
+        response['courses'] = courses
+
+        return json.dumps(response)
+
+@library_page.route('/getType', methods=['GET'])
+def get_type():
+        course = _get_course()
+
+        response = {}
+        response['type'] = course.get_type()
+
+        return json.dumps(response)
+
+@library_page.route('/getGraders', methods=['GET'])
+def get_graders():
+        course = _get_course()
+        
+        response = {}
+        response['graders'] = course.get_graders()
+
+        return json.dumps(response)
+
+
+@library_page.route('/getGrades', methods=['GET'])
+def get_grades():
+        course = _get_course()
+        
+        response = course.get_graders()
+        response['type'] = course.get_type()
+
+        return json.dumps(response)
+
+
+@library_page.route('/getStudents', methods=['GET'])
+def get_students():
+        course = _get_course()
+
+        response = course.get_students()
+        response['type'] = course.get_type()
+
+        return json.dumps(response)
 
 
 def _get_all_pages(course_list, check_published):
@@ -33,7 +97,7 @@ def _get_all_pages(course_list, check_published):
 
 
 '''
-get_user -- gets the user's Linux login, grading groups, and admin groups
+_get_user -- gets the user's Linux login, grading groups, and admin groups
            args: none
            helper functions: _get_courses and _valid_course
            returns: four-tuple (remote_user, admin, grading, courses)
@@ -49,7 +113,7 @@ get_user -- gets the user's Linux login, grading groups, and admin groups
 '''
 
 
-def get_user():
+def _get_user():
         remote_user = auth.get_user()
         admin, grading = auth.get_admin_grading()
         courses = auth._get_courses()

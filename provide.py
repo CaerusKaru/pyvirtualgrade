@@ -37,9 +37,8 @@ def _get_latest(path, student):
 get_problem -- read the file source in the provide directory
 '''
 
-
-def get_problem(course, assignment, student, src):
-        auth.check_is_grader(course)
+@auth.grader
+def get_problem(course='', assignment='', student='', src=''):
 
         full_path = constants.COMP_PATH
 
@@ -77,10 +76,9 @@ get_students_for_assignment -- gets a list of all students in a provide
                                assignment
 '''
 
+@auth.grader
+def get_students_for_assignment(course='', assignment=''):
 
-def get_students_for_assignment(course, assignment):
-
-        auth.check_is_grader(course)
         full_path = constants.COMP_PATH
 
         if not _check_folder(full_path, course):

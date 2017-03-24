@@ -3,3 +3,4 @@
 *.pyc
 p2
 application.log
+__pycache__

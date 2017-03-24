@@ -79,9 +79,7 @@ def read_alist(course):
 _get_source -- gets the file repository for an assignment in a specific course
 '''
 
-
 def _get_source(course, assignment):
-        auth.check_is_grader(course)
 
         alist = read_alist(course)
         if (not alist == []) and (assignment in alist):
@@ -96,9 +94,10 @@ get_students_for_grading -- gets the list of students from the correct storage
 '''
 
 
-def get_students_for_assignment(course, assignment):
+@auth.grader
+def get_students_for_assignment(course='', assignment=''):
         if _get_source(course, assignment) == constants.PROVIDE_SRC:
-                return provide.get_students_for_assignment(course, assignment)
+                return provide.get_students_for_assignment(course=course, assignment=assignment)
         return []
 
 
@@ -107,12 +106,10 @@ get_problem -- reads in course, assignment, and student, along with the source
                file then retrieves the file source and returns it as raw data
 '''
 
-
-def get_problem(course, assignment, student, src):
-        auth.check_is_grader(course)
-
+@auth.grader
+def get_problem(course='', assignment='', student='', src=''):
         if _get_source(course, assignment) == constants.PROVIDE_SRC:
-                return provide.get_problem(course, assignment, student, src)
+                return provide.get_problem(course=course, assignment=assignment, student=student, src=src)
         return ''
 
 
@@ -127,10 +124,8 @@ read_completed -- reads in the file containing all info about 'completed'
                     module
 '''
 
-
-def read_completed(course, assignment):
-        auth.check_is_grader(course)
-
+@auth.grader
+def read_completed(course='', assignment=''):
         if not _check_course(course):
                 return []
         else:
@@ -173,9 +168,8 @@ read_inprogress -- reads in the file containing all info about inprogress'
                      responsible module
 '''
 
-
-def read_inprogress(course, assignment):
-        auth.check_is_grader(course)
+@auth.grader
+def read_inprogress(course='', assignment=''):
 
         if not _check_course(course):
                 return []

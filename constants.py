@@ -9,9 +9,6 @@ import os
 import pwd
 import getpass  # to get home directory
 
-# MOVE TO ENV ASAP
-SECRET_KEY = '64q,Jvgj~B73?1-6&$.^fiD3zT0];8jB2of%V9^dl.WG1|G1X5j6eEPRe5y7|K>'
-
 
 def _storage_owner(path):
     owner = pwd.getpwuid(os.stat(path).st_uid)[0]

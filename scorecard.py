@@ -33,15 +33,15 @@ from . import constants
 from . import auth
 
 
-def get_students_for_grading(course, assignment):
-        auth.check_is_grader(course)
+@auth.grader
+def get_students_for_grading(course='', assignment=''):
 
         response = {}
 
-        names = set(file_manager.get_students_for_assignment(course, assignment))
+        names = set(file_manager.get_students_for_assignment(course=course, assignment=assignment))
 
-        com = file_manager.read_completed(course, assignment)
-        inp = file_manager.read_inprogress(course, assignment)
+        com = file_manager.read_completed(course=course, assignment=assignment)
+        inp = file_manager.read_inprogress(course=course, assignment=assignment)
 
         names = list(names.difference(set(com), set(inp)))
         

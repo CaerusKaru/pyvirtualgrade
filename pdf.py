@@ -28,24 +28,15 @@ from . import constants
 from . import file_manager
 from . import library
 from . import auth
+from flask import Blueprint, session, request, make_response
+import json
 
-
-def phone_tree(form):
-        req = form.getvalue('pdf_request')
-        response = {}
-        if req == 'get_next_student':
-                response = get_next_student(form)
-        elif req == 'get_problem_for_student':
-                response = get_problem_for_student(form)
-        else:
-                response['error'] = 'unsupported PDF method'
-
-        return response
+pdf_page = Blueprint('pdf_page', __name__)
 
 
 def _get_names_by_page(course, assignment, page, com):
 
-        names = file_manager.get_students_for_assignment(course, assignment)
+        names = file_manager.get_students_for_assignment(course=course, assignment=assignment)
 
         num_names = len(names)
         num_names = num_names if num_names != 0 else 1
@@ -76,7 +67,7 @@ def get_students_for_grading(course, assignment):
         num_pages = int(library.get_adetails(course, assignment)['pages'])
 
         response = {}
-        com = file_manager.read_completed(course, assignment)
+        com = file_manager.read_completed(course=course, assignment=assignment)
 
         for i in range(0, num_pages):
                 page = {}
@@ -96,8 +87,8 @@ def get_students_for_grading(course, assignment):
 
 
 def _find_next_student(course, assignment, problem):
-        names = file_manager.get_students_for_assignment(course, assignment)
-        com = file_manager.read_completed(course, assignment)
+        names = file_manager.get_students_for_assignment(course=course, assignment=assignment)
+        com = file_manager.read_completed(course=course, assignment=assignment)
 
         unfinished_names = sorted([x for x in names if x not in com[problem]])
 
@@ -107,32 +98,40 @@ def _find_next_student(course, assignment, problem):
                 return ''
 
 
-def get_problem_for_student(form):
+@pdf_page.route('/getProblemForStudent', methods=['GET'])
+def get_problem_for_student():
         response = {}
 
-        course = form.getvalue('course')
-        assignment = form.getvalue('assign')
-        student = form.getvalue('student')
-        problem = form.getvalue('problem')
+        course = request.args.get('course')
+        assignment = request.args.get('assign')
+        student = request.args.get('student')
+        problem = request.args.get('problem')
 
         library.check_args({'course': course, 'assignment': assignment,
                             'problem': problem})
-        auth.check_is_grader(course)
 
         src_convention = 'p' + problem + '.svg'
 
-        svg = file_manager.get_problem(course, assignment, student,
-                                       src_convention)
+        @auth.grader
+        def get_prob(course=''):
+                svg = file_manager.get_problem(course=course, assignment=assignment, student=student,
+                                               src=src_convention)
 
-        response['svg'] = [svg]
+                response['svg'] = [svg]
 
-        return response
+                resp = make_response(json.dumps(response))
+                resp.mimetype = 'text/plain'
+
+                return resp
+
+        return get_prob(course=course)
 
 
-def get_next_student(form):
-        course = form.getvalue('course')
-        assignment = form.getvalue('assign')
-        problem = form.getvalue('problem')
+@pdf_page.route('/getNextStudent', methods=['GET'])
+def get_next_student():
+        course = request.args.get('course')
+        assignment = request.args.get('assign')
+        problem = request.args.get('problem')
 
         response = {}
 
@@ -151,4 +150,4 @@ def get_next_student(form):
         response['student'] = next_student
         response['score'] = score
 
-        return response
+        return json.dumps(response)
